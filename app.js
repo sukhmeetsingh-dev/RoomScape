@@ -8,6 +8,7 @@ const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
 const { listingSchema } = require("./schema.js");
+const Review = require("./models/review.js");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Hi, I am root");
@@ -118,18 +120,36 @@ app.delete(
   })
 );
 
-// app.get("/testListening", async(req,res) => {
-//     let sampleListing = new Listing({
-//         title: "My New Villa",
-//         description: "By the beach",
-//         price: 1200,
-//         location: "Calangute, Goa",
-//         country: "India",
-//     });
-//     await sampleListing.save();
-//     console.log("sample was saved");
-//     res.send("successful testing");
-// });
+// REVIEWS
+// Post Route
+
+app.post("/listings/:id/reviews", async (req, res) => {
+  try {
+    const listingId = req.params.id;
+
+    // Validate ID format before querying
+    if (!mongoose.Types.ObjectId.isValid(listingId)) {
+      return res.status(400).send("Invalid Listing ID");
+    }
+
+    let listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).send("Listing not found");
+    }
+
+    let newReview = new Review(req.body.review);
+    listing.reviews.push(newReview);
+
+    await newReview.save();
+    await listing.save();
+
+    console.log("new review saved");
+    res.send("new review saved");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong");
+  }
+});
 
 app.all("*", (req, res, next) => {
   next(new ExpressError(404, "Page not Found!"));
