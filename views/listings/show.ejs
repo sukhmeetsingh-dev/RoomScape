@@ -1,7 +1,8 @@
 <% layout("/layouts/boilerplate") %>
 <script>
   const mapToken = "<%= process.env.MAP_TOKEN %>";
-  const coordinates = "<%- JSON.stringify(listing.geometery.coordinates) %>";
+  const listing = <%- JSON.stringify(listing) %>;
+  console.log(listing.geometry)
 </script>
 <div class="row">
   <div class="col-8 offset-3">
